@@ -1,0 +1,327 @@
+    /* Paleta de Cores Oceânicas */
+    :root {
+        --azul-escuro: #1a3a5f;
+        --azul-medio: #2a6b9a;
+        --azul-claro: #4da8da;
+        --verde-agua: #096df9;
+        --branco-espuma: #f0f8ff;
+        --cinza-areia: #e6e6e6;
+    }
+
+    /* Reset e Estilos Gerais */
+    body {
+        font-family: 'Arial', sans-serif;
+        margin: 0;
+        padding: 0;
+        color: var(--azul-escuro);
+        background-color: var(--branco-espuma);
+    }
+
+    .container {
+        width: 90%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px 0;
+    }
+
+    /* Cabeçalho Hero */
+    .hero {
+        background-image: linear-gradient(rgba(26, 58, 95, 0.7), rgba(26, 58, 95, 0.7)), url('https://images.pexels.com/photos/5231896/pexels-photo-5231896.jpeg?auto=compress&cs=tinysrgb&w=800');
+        background-size: cover;
+        background-position: center;
+        height: 100vh;
+        min-height: 500px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        color: white;
+        padding: 0 20px;
+    }
+
+    .logo {
+        max-width: 150px;
+        margin-bottom: 20px;
+    }
+
+    .hero h1 {
+        font-size: 3rem;
+        margin: 10px 0;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .hero p {
+        font-size: 1.2rem;
+        max-width: 600px;
+        margin-bottom: 30px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn {
+        display: inline-block;
+        background-color: var(--verde-agua);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 30px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        border: 1px solid black;
+        cursor: pointer;
+    }
+
+    .btn:hover {
+        background-color: var(--azul-claro);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Seção de Aulas */
+    .aulas {
+        padding: 60px 0;
+        background-color: white;
+    }
+    section{
+        background-image: url('https://images.pexels.com/photos/22873531/pexels-photo-22873531/free-photo-of-surfistas-indo-para-o-mar.jpeg?auto=compress&cs=tinysrgb&w=800');
+        background-size: cover;
+        background-position: center;
+    }
+
+    .section-title {
+        text-align: center;
+        margin-bottom: 40px;
+        color: var(--azul-escuro);
+        font-size: 2.2rem;
+    }
+
+    .aulas-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+    }
+
+    .aula-card {
+        background-color: var(--branco-espuma);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .aula-card:hover {
+        transform: translateY(-10px);
+    }
+
+    .aula-img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .aula-content {
+        padding: 20px;
+    }
+
+    .aula-title {
+        font-size: 1.5rem;
+        margin: 0 0 10px;
+        color: var(--azul-medio);
+    }
+
+    .aula-desc {
+        margin: 10px 0;
+        color: var(--azul-escuro);
+    }
+
+    .aula-info {
+        margin: 15px 0;
+        font-weight: bold;
+    }
+
+    /* Seção Sobre */
+    .sobre {
+        padding: 60px 0;
+        background-color: var(--cinza-areia);
+    }
+
+    .sobre-content {
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    .sobre-text {
+        line-height: 1.6;
+        font-size: 1.1rem;
+    }
+
+    /* Rodapé */
+    footer {
+        background-color: var(--azul-escuro);
+        color: white;
+        padding: 40px 0 20px;
+    }
+
+    .footer-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+    }
+
+    .footer-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .footer-contact {
+        margin-bottom: 20px;
+    }
+
+    .footer-contact p {
+        margin: 5px 0;
+    }
+
+    .social-icons {
+        display: flex;
+        gap: 15px;
+    }
+
+    .social-icon {
+        color: white;
+        font-size: 1.5rem;
+        transition: color 0.3s ease;
+    }
+
+    .social-icon:hover {
+        color: var(--verde-agua);
+    }
+
+    .map {
+        width: 100%;
+        height: 300px;
+        border: 0;
+        border-radius: 10px;
+    }
+
+    .copyright {
+        text-align: center;
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Modal de Agendamento */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 500px;
+        position: relative;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .close {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        color: var(--azul-escuro);
+        transition: color 0.3s;
+    }
+
+    .close:hover {
+        color: var(--verde-agua);
+    }
+
+    .modal h2 {
+        color: var(--azul-escuro);
+        margin-top: 0;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .form-group {
+        margin-bottom: 10px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: var(--azul-escuro);
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 2px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    #mensagem-agendamento {
+        display: none;
+        text-align: center;
+        padding: 15px;
+        margin-top: 20px;
+        border-radius: 5px;
+        background-color: #dff0d8;
+        color: #3c763d;
+        font-weight: bold;
+    }
+
+    .reserva-info {
+        background-color: var(--branco-espuma);
+        border-radius: 8px;
+        margin-bottom: 5px;
+        text-align: center;
+        border: 1px solid var(--azul-claro);
+    }
+
+    .reserva-info h3 {
+        margin-top: 0;
+        color: var(--azul-medio);
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2.2rem;
+        }
+
+        .aulas-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .footer-container {
+            grid-template-columns: 1fr;
+        }
+
+        .map {
+            height: 250px;
+            order: -1;
+        }
+        
+        .modal-content {
+            padding: 20px;
+        }
+    }
