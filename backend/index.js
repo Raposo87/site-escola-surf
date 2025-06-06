@@ -16,7 +16,7 @@ const pool = new Pool({
 });
 
 // Correção: createTransport (sem 'er' no final)
-const transporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransporter({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
@@ -70,13 +70,64 @@ app.post('/webhook/stripe', express.raw({type: 'application/json'}), async (req,
   res.json({received: true});
 });
 
-// Configuração do CORS e JSON APÓS o webhook
-app.use(cors());
+// ✅ CONFIGURAÇÃO CORS CORRIGIDA - ANTES dos outros middlewares
+const corsOptions = {
+  origin: [
+    'https://raposo87.github.io',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:5500', // Para Live Server do VS Code
+    'https://site-escola-surf-production.up.railway.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'Accept',
+    'Origin'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200 // Para suportar navegadores legados
+};
+
+app.use(cors(corsOptions));
+
+// Middleware adicional para garantir headers CORS em todas as respostas
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (corsOptions.origin.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  // Responder imediatamente a requisições OPTIONS (preflight)
+  if (req.method === 'OPTIONS') {
+    console.log('🔄 Preflight request recebido de:', origin);
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
+// JSON middleware APÓS CORS
 app.use(express.json());
+
+// Middleware de logging para debug
+app.use((req, res, next) => {
+  console.log(`📨 ${req.method} ${req.path} - Origin: ${req.headers.origin}`);
+  next();
+});
 
 // Rota de teste
 app.get('/', (req, res) => {
-  res.send('API de agendamento funcionando!');
+  res.json({ 
+    message: 'API de agendamento funcionando!',
+    cors: 'Configurado para GitHub Pages',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Rota para criar um novo agendamento (caso queira testar diretamente)
@@ -105,11 +156,24 @@ app.get('/agendamentos', async (req, res) => {
   }
 });
 
-// Rota de pagamentos - CORRIGIDA
+// Rota de pagamentos - COM LOGS DE DEBUG
 app.post('/criar-sessao-pagamento', async (req, res) => {
+  console.log('🎯 Requisição recebida em /criar-sessao-pagamento');
+  console.log('📋 Origin:', req.headers.origin);
+  console.log('📋 Headers:', req.headers);
+  
   const { nome, email, data_agendamento, horario, preco, descricao } = req.body;
 
-  console.log('Dados recebidos:', { nome, email, data_agendamento, horario, preco, descricao });
+  console.log('📊 Dados recebidos:', { nome, email, data_agendamento, horario, preco, descricao });
+
+  // Validação básica
+  if (!nome || !email || !data_agendamento || !horario || !preco) {
+    console.log('❌ Dados obrigatórios faltando');
+    return res.status(400).json({ 
+      error: 'Dados obrigatórios faltando',
+      required: ['nome', 'email', 'data_agendamento', 'horario', 'preco']
+    });
+  }
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -143,11 +207,18 @@ app.post('/criar-sessao-pagamento', async (req, res) => {
       }
     });
 
-    console.log('Sessão criada com sucesso:', session.id);
-    res.json({ url: session.url });
+    console.log('✅ Sessão Stripe criada:', session.id);
+    res.json({ 
+      url: session.url,
+      session_id: session.id,
+      success: true
+    });
   } catch (error) {
-    console.error('Erro ao criar sessão:', error);
-    res.status(500).json({ error: 'Erro ao criar sessão de pagamento' });
+    console.error('❌ Erro ao criar sessão Stripe:', error);
+    res.status(500).json({ 
+      error: 'Erro ao criar sessão de pagamento',
+      details: error.message
+    });
   }
 });
 
@@ -212,4 +283,5 @@ async function enviarEmailConfirmacao(session) {
 app.listen(port, () => {
   console.log(`🚀 Servidor rodando na porta ${port}`);
   console.log(`🌐 URL: https://site-escola-surf-production.up.railway.app`);
+  console.log(`🔧 CORS configurado para:`, corsOptions.origin);
 });
