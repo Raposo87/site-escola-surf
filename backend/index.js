@@ -15,7 +15,6 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
-// Correção: createTransport (sem 'er' no final)
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
