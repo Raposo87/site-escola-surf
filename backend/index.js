@@ -15,7 +15,7 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
-const transporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransporter({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
@@ -69,40 +69,20 @@ app.post('/webhook/stripe', express.raw({type: 'application/json'}), async (req,
   res.json({received: true});
 });
 
-// Middleware para adicionar headers CORS manualmente
-app.use((req, res, next) => {
-  const allowedOrigins = [
+// CORS CORRIGIDO - Configuração simplificada e correta
+const corsOptions = {
+  origin: [
     'https://raposo87.github.io',
     'http://localhost:3000',
     'http://localhost:3001',
-    'http://127.0.0.1:5500',
-    'https://site-escola-surf-production.up.railway.app'
-  ];
-  
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  
-  // Permitir acesso do seu domínio GitHub Pages
-  res.setHeader('Access-Control-Allow-Origin', 'https://raposo87.github.io');
-  
-  // Permitir métodos específicos
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  
-  // Permitir cabeçalhos específicos
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
-  if (req.method === 'OPTIONS') {
-    console.log('🔄 Preflight request recebido de:', origin);
-    return res.status(200).end();
-  }
-  
-  next();
-});
+    'http://127.0.0.1:5500'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 
 // JSON middleware APÓS CORS
 app.use(express.json());
@@ -122,4 +102,119 @@ app.get('/', (req, res) => {
   });
 });
 
-// ... restante do código permanece igual ...
+// Rota para criar sessão de pagamento
+app.post('/criar-sessao-pagamento', async (req, res) => {
+  try {
+    console.log('📝 Dados recebidos:', req.body);
+    
+    const { nome, email, data_agendamento, horario, preco, descricao } = req.body;
+
+    // Validação básica
+    if (!nome || !email || !data_agendamento || !horario || !preco) {
+      return res.status(400).json({ 
+        error: 'Dados obrigatórios faltando',
+        required: ['nome', 'email', 'data_agendamento', 'horario', 'preco']
+      });
+    }
+
+    // Criar sessão do Stripe
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'eur',
+          product_data: {
+            name: descricao || 'Aula de Surf',
+            description: `Aula agendada para ${data_agendamento} às ${horario}`,
+          },
+          unit_amount: Math.round(preco * 100), // Converter para centavos
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      success_url: `https://raposo87.github.io/frontend-escola-surf/?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `https://raposo87.github.io/frontend-escola-surf/?canceled=true`,
+      metadata: {
+        nome,
+        email,
+        data_agendamento,
+        horario,
+        preco: preco.toString()
+      }
+    });
+
+    console.log('✅ Sessão criada:', session.id);
+    res.json({ url: session.url });
+
+  } catch (error) {
+    console.error('❌ Erro ao criar sessão:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      message: error.message 
+    });
+  }
+});
+
+// Rota para verificar pagamento
+app.get('/verificar-pagamento/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    
+    res.json({
+      status: session.payment_status,
+      customer_email: session.customer_details?.email,
+      amount_total: session.amount_total / 100
+    });
+  } catch (error) {
+    console.error('❌ Erro ao verificar pagamento:', error);
+    res.status(500).json({ error: 'Erro ao verificar pagamento' });
+  }
+});
+
+// Função para enviar email de confirmação
+async function enviarEmailConfirmacao(session) {
+  try {
+    const { nome, email, data_agendamento, horario } = session.metadata;
+    
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: '✅ Confirmação de Agendamento - Surf Wave Lisboa',
+      html: `
+        <h2>Agendamento Confirmado!</h2>
+        <p>Olá ${nome},</p>
+        <p>Seu agendamento foi confirmado com sucesso:</p>
+        <ul>
+          <li><strong>Data:</strong> ${data_agendamento}</li>
+          <li><strong>Horário:</strong> ${horario}</li>
+          <li><strong>Valor pago:</strong> €${session.amount_total / 100}</li>
+        </ul>
+        <p>Nos vemos na praia! 🏄‍♀️</p>
+        <p>Surf Wave Lisboa</p>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('📧 Email enviado para:', email);
+  } catch (error) {
+    console.error('❌ Erro ao enviar email:', error);
+  }
+}
+
+// Rota para listar agendamentos (opcional para admin)
+app.get('/agendamentos', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM agendamentos ORDER BY data_agendamento DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('❌ Erro ao buscar agendamentos:', error);
+    res.status(500).json({ error: 'Erro ao buscar agendamentos' });
+  }
+});
+
+// Iniciar servidor
+app.listen(port, () => {
+  console.log(`🚀 Servidor rodando na porta ${port}`);
+  console.log(`🌐 CORS configurado para: ${corsOptions.origin.join(', ')}`);
+});
