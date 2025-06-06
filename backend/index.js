@@ -1,5 +1,5 @@
 require('dotenv').config();
-const express = require('express'); // ✅ ADICIONADO - estava faltando
+const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const Stripe = require('stripe');
@@ -15,8 +15,8 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
-// Configurar email
-const transporter = nodemailer.createTransporter({
+// Correção: createTransport (sem 'er' no final)
+const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
