@@ -56,7 +56,7 @@ app.get('/agendamentos', async (req, res) => {
 
   // Rota de pagamentos
   app.post('/criar-sessao-pagamento', async (req, res) => {
-    const { nome, email, preco } = req.body; // Recebe os dados do frontend
+    const { nome, email, data_agendamento, horario, preco } = req.body;
   
     try {
       const session = await stripe.checkout.sessions.create({
@@ -67,14 +67,20 @@ app.get('/agendamentos', async (req, res) => {
             product_data: {
               name: nome,
             },
-            unit_amount: preco * 100, // Stripe espera o valor em centavos
+            unit_amount: preco * 100,
           },
           quantity: 1,
         }],
         mode: 'payment',
         customer_email: email,
-        success_url: 'https://raposo87.github.io/frontend-escola-surf/',
-        cancel_url: 'https://raposo87.github.io/frontend-escola-surf/',
+        success_url: 'https://SEU_FRONTEND_URL/sucesso.html',
+        cancel_url: 'https://SEU_FRONTEND_URL/cancelado.html',
+        metadata: {
+          nome,
+          email,
+          data_agendamento,
+          horario
+        }
       });
   
       res.json({ url: session.url });
@@ -83,3 +89,34 @@ app.get('/agendamentos', async (req, res) => {
       res.status(500).json({ error: 'Erro ao criar sessão de pagamento' });
     }
   });
+
+app.post('/webhook-stripe', express.raw({type: 'application/json'}), (req, res) => {
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET; // Pegue no painel da Stripe
+  const sig = req.headers['stripe-signature'];
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.log(`Webhook signature verification failed.`, err.message);
+    return res.sendStatus(400);
+  }
+
+  // Quando o pagamento for aprovado
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const { nome, email, data_agendamento, horario } = session.metadata;
+
+    // Salve o agendamento no banco aqui!
+    pool.query(
+      'INSERT INTO agendamentos (nome, email, data_agendamento, horario) VALUES ($1, $2, $3, $4)',
+      [nome, email, data_agendamento, horario]
+    ).then(() => {
+      console.log('Agendamento salvo após pagamento!');
+    }).catch(err => {
+      console.error('Erro ao salvar agendamento:', err);
+    });
+  }
+
+  res.json({received: true});
+});
