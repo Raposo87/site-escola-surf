@@ -1,3 +1,5 @@
+const Stripe = require('stripe');
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -49,5 +51,35 @@ app.get('/agendamentos', async (req, res) => {
     } catch (error) {
       console.error('Erro ao buscar agendamentos:', error);
       res.status(500).json({ error: 'Erro ao buscar agendamentos' });
+    }
+  });
+
+  // Rota de pagamentos
+  app.post('/criar-sessao-pagamento', async (req, res) => {
+    const { nome, email, preco } = req.body; // Recebe os dados do frontend
+  
+    try {
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'eur',
+            product_data: {
+              name: nome,
+            },
+            unit_amount: preco * 100, // Stripe espera o valor em centavos
+          },
+          quantity: 1,
+        }],
+        mode: 'payment',
+        customer_email: email,
+        success_url: 'https://raposo87.github.io/frontend-escola-surf/',
+        cancel_url: 'https://raposo87.github.io/frontend-escola-surf/',
+      });
+  
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Erro ao criar sessão de pagamento' });
     }
   });
