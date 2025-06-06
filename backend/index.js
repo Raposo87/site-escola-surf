@@ -84,6 +84,14 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   
+  // Permitir acesso do seu domínio GitHub Pages
+  res.setHeader('Access-Control-Allow-Origin', 'https://raposo87.github.io');
+  
+  // Permitir métodos específicos
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  
+  // Permitir cabeçalhos específicos
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
